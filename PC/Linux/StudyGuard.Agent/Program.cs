@@ -23,8 +23,34 @@ internal static class Program
         if (geteuid() != 0) { Console.Error.WriteLine("Start the system agent as root (sudo or systemd)."); return 3; }
         var configPath = GetArg(args, "--config") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config/studyguard/config.json");
         if (!int.TryParse(GetArg(args, "--uid"), out var targetUid)) targetUid = 1000;
+        var targetUser = GetArg(args, "--user") ?? GetUserName(targetUid);
+        var targetHome = GetArg(args, "--home") ?? GetHomeDirectory(targetUser);
+        var stateDirectory = GetArg(args, "--state-dir") ?? "/var/lib/studyguard";
+        using var websiteProxy = new DesktopWebsiteProxy(targetUid, targetUser, targetHome, stateDirectory);
+        if (args.Contains("--restore-proxy", StringComparer.Ordinal))
+        {
+            websiteProxy.RestoreOnly();
+            return 0;
+        }
+
         Console.WriteLine($"StudyGuard Linux agent is watching user UID {targetUid}.");
-        while (true)
+        using var shutdown = new CancellationTokenSource();
+        using var sigterm = PosixSignalRegistration.Create(PosixSignal.SIGTERM, context =>
+        {
+            context.Cancel = true;
+            try { websiteProxy.StopAndRestore(); }
+            catch (Exception exception) { Console.Error.WriteLine($"StudyGuard proxy restoration failed: {exception.Message}"); }
+            shutdown.Cancel();
+        });
+        using var sigint = PosixSignalRegistration.Create(PosixSignal.SIGINT, context =>
+        {
+            context.Cancel = true;
+            try { websiteProxy.StopAndRestore(); }
+            catch (Exception exception) { Console.Error.WriteLine($"StudyGuard proxy restoration failed: {exception.Message}"); }
+            shutdown.Cancel();
+        });
+
+        while (!shutdown.IsCancellationRequested)
         {
             try
             {
@@ -32,13 +58,20 @@ internal static class Program
                 var now = DateTimeOffset.Now;
                 var active = ConfigReader.Active(config, now);
                 var blockedApps = GetBlockedApps(config, active, now);
-                var blockedSites = GetBlockedSites(config, active);
+                var blockedSites = WebsitePolicy.GetBlockedSites(config, active);
+                var permanentSites = config.PermanentSites.Select(entry => ConfigReader.NormalizeDomain(entry.Value))
+                    .Where(domain => domain.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 EnforceApps(blockedApps, targetUid, now);
-                UpdateHosts(blockedSites);
+                var youtubeProxyActive = false;
+                try { youtubeProxyActive = websiteProxy.Update(blockedSites, permanentSites); }
+                catch (Exception exception) { Console.Error.WriteLine($"StudyGuard desktop proxy error: {exception.Message}"); }
+                UpdateHosts(blockedSites, youtubeProxyActive);
             }
             catch (Exception exception) { Console.Error.WriteLine($"StudyGuard enforcement error: {exception.Message}"); }
-            await Task.Delay(TimeSpan.FromSeconds(2));
+            try { await Task.Delay(TimeSpan.FromSeconds(2), shutdown.Token); }
+            catch (OperationCanceledException) { }
         }
+        return 0;
     }
 
     private static HashSet<string> GetBlockedApps(StudyData config, ActivityRule? active, DateTimeOffset now)
@@ -55,24 +88,6 @@ internal static class Program
             foreach (var app in active.Apps.Select(NormalizeProcess).Where(x => x.Length > 0))
                 if (!exceptions.Contains(app) && !blocked.Contains(app)) blocked.Add(app);
         }
-        return blocked;
-    }
-
-    private static HashSet<string> GetBlockedSites(StudyData config, ActivityRule? active)
-    {
-        var blocked = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var entry in config.PermanentSites)
-        {
-            var domain = ConfigReader.NormalizeDomain(entry.Value);
-            if (domain.Length > 0) blocked.Add(domain);
-        }
-        var exceptions = config.ExceptionSites.Select(ConfigReader.NormalizeDomain).Where(x => x.Length > 0).ToList();
-        if (active?.BlockSites == true)
-            foreach (var raw in active.Sites)
-            {
-                var domain = ConfigReader.NormalizeDomain(raw);
-                if (domain.Length > 0 && !exceptions.Any(exception => ConfigReader.Matches(domain, exception)) && !blocked.Contains(domain)) blocked.Add(domain);
-            }
         return blocked;
     }
 
@@ -115,7 +130,7 @@ internal static class Program
         return -1;
     }
 
-    private static void UpdateHosts(HashSet<string> domains)
+    private static void UpdateHosts(HashSet<string> domains, bool youtubeProxyActive)
     {
         const string hosts = "/etc/hosts";
         if (!File.Exists(hosts)) return;
@@ -129,7 +144,8 @@ internal static class Program
             if (line.Trim() == EndMarker) { inManaged = false; continue; }
             if (!inManaged) cleaned.Add(line);
         }
-        var expanded = domains.SelectMany(ExpandHostNames).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase).ToList();
+        var hostsDomains = WebsitePolicy.GetHostsDomains(domains, youtubeProxyActive);
+        var expanded = hostsDomains.SelectMany(ExpandHostNames).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase).ToList();
         if (expanded.Count > 0)
         {
             while (cleaned.Count > 0 && cleaned[^1].Length == 0) cleaned.RemoveAt(cleaned.Count - 1);
@@ -141,7 +157,8 @@ internal static class Program
         if (updated == existing.Replace("\r\n", "\n")) return;
         var temporary = hosts + ".studyguard.tmp";
         File.WriteAllText(temporary, updated);
-        File.SetUnixFileMode(temporary, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.GroupRead | UnixFileMode.OtherRead);
+        if (OperatingSystem.IsLinux())
+            File.SetUnixFileMode(temporary, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.GroupRead | UnixFileMode.OtherRead);
         File.Move(temporary, hosts, true);
         Console.WriteLine($"Updated managed website rules in {hosts} ({expanded.Count} host names).");
     }
@@ -168,5 +185,22 @@ internal static class Program
             if (args[i] == key && i + 1 < args.Length) return args[i + 1];
         }
         return null;
+    }
+
+    private static string GetUserName(int uid)
+    {
+        var entry = File.ReadLines("/etc/passwd").FirstOrDefault(line =>
+        {
+            var fields = line.Split(':');
+            return fields.Length > 2 && fields[2] == uid.ToString();
+        });
+        return entry?.Split(':')[0] ?? throw new InvalidOperationException($"Could not find account for UID {uid}.");
+    }
+
+    private static string GetHomeDirectory(string userName)
+    {
+        var entry = File.ReadLines("/etc/passwd").FirstOrDefault(line => line.StartsWith(userName + ":", StringComparison.Ordinal));
+        var home = entry?.Split(':').ElementAtOrDefault(5);
+        return string.IsNullOrWhiteSpace(home) ? throw new InvalidOperationException($"Could not find home directory for {userName}.") : home;
     }
 }

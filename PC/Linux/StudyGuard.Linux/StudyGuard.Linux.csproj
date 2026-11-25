@@ -7,7 +7,7 @@
     <ApplicationManifest></ApplicationManifest>
     <RootNamespace>StudyGuard.Linux</RootNamespace>
     <AssemblyName>StudyGuard.Linux</AssemblyName>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.1.6" />

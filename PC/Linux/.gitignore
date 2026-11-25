@@ -3,3 +3,4 @@
 .build-local/
 Distribution/StudyGuard-Linux-x64/
 Distribution/*.tar.gz
+Release/

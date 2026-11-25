@@ -112,7 +112,7 @@ public sealed class MainWindow : Window
         foreach (var entry in data.PermanentSites.ToList()) AddTimedEntry(entry, true);
         var addSite = ActionButton("＋ إضافة موقع", Accent); addSite.Click += async (_, _) => { var result = await EntryDialog("إضافة موقع دائم", true); if (result is not null) ShowPage(page); };
         content.Children.Add(addSite);
-        AddCard("تنبيه المواقع", "يكتب وكيل الحماية النطاقات في ملف hosts للنظام. بعض التطبيقات قد تستخدم DNS مشفرًا أو عناوين فرعية غير مدرجة.");
+        AddCard("تنبيه المواقع", "تُحجب المواقع الأخرى عبر ملف hosts. عند حجب YouTube يستخدم الوكيل إعداد GNOME ويفحص مسار البرنامج؛ قد تتجاوز التطبيقات التي لا تتبع وكيل سطح المكتب الحجب.");
     }
 
     private void AddTimedEntry(TimedEntry entry, bool site)
@@ -173,7 +173,8 @@ public sealed class MainWindow : Window
         pageTitle.Text = "التشغيل والحماية";
         AddCard("خدمة الحماية", "بعد فك حزمة Linux شغّل install.sh مرة واحدة مع sudo. ستعمل الخدمة في الخلفية عند إغلاق StudyGuard.");
         AddCard("حجب التطبيقات", "يحتاج وكيل النظام صلاحية إيقاف عمليات المستخدم. يرسل إشارة إغلاق عادية، ثم ينهي التطبيق بعد مهلة قصيرة إذا بقي مفتوحًا.");
-        AddCard("حجب المواقع", "تُطبّق المواقع على مستوى الجهاز عبر /etc/hosts. يتطلب ذلك تثبيت وكيل النظام بصلاحية مسؤول.");
+        AddCard("حجب المواقع", "تُطبّق المواقع الأخرى عبر /etc/hosts. لحجب YouTube مع السماح لـyt-dlp المعتمد، يضبط الوكيل وكيل GNOME المحلي ويميز البرنامج من مساره التنفيذي. يلزم تسجيل الدخول إلى جلسة GNOME.");
+        AddCard("حدود الشبكة", "هذا ليس جدارًا ناريًا؛ قد تتجاوز الحجب اتصالات مباشرة أو QUIC أو VPN أو تطبيقات لا تتبع إعداد وكيل GNOME.");
         AddCard("متطلبات", "النسخة مخصصة لـLinux x64 مع systemd وواجهة رسومية X11 أو Wayland عبر XWayland. اختبرها أولًا على Ubuntu/Debian.");
     }
 
