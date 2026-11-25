@@ -1,0 +1,32 @@
+name: Build StudyGuard for Linux
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  linux-x64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Publish Arabic desktop app
+        run: dotnet publish StudyGuard.Linux/StudyGuard.Linux.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o staging/StudyGuard-Linux-x64/app
+      - name: Publish system protection agent
+        run: dotnet publish StudyGuard.Agent/StudyGuard.Agent.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o staging/StudyGuard-Linux-x64/agent
+      - name: Assemble installable archive
+        run: |
+          cp package/install.sh package/uninstall.sh package/README.txt staging/StudyGuard-Linux-x64/
+          chmod +x staging/StudyGuard-Linux-x64/install.sh staging/StudyGuard-Linux-x64/uninstall.sh
+          tar -czf StudyGuard-Linux-x64.tar.gz -C staging StudyGuard-Linux-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: StudyGuard-Linux-x64
+          path: StudyGuard-Linux-x64.tar.gz
+          if-no-files-found: error

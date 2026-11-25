@@ -1,0 +1,17 @@
+# .NET build output
+**/bin/
+**/obj/
+**/.vs/
+**/TestResults/
+
+# Local builds, backups, and binary distributions
+PC/Backups/
+PC/Build/
+PC/Distribution/
+PC/StudyGuardApp/
+PC/Linux/Distribution/
+PC/Source/StudyGuard/ChatGPT Installer.exe
+
+# Accidental empty command-output files from early setup
+PC/Source/StudyGuard/cd
+PC/Source/StudyGuard/dotnet

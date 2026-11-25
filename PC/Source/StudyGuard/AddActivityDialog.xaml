@@ -1,0 +1,164 @@
+<Window x:Class="StudyGuard.AddActivityDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="إضافة نشاط جديد"
+        Width="520"
+        Height="650"
+        MinWidth="460"
+        MinHeight="600"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#10131B"
+        Foreground="#F4F6FC"
+        FontFamily="Tahoma"
+        FlowDirection="RightToLeft">
+    <Window.Resources>
+        <Style x:Key="LightTimePickerItemStyle" TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Padding" Value="6,5"/>
+            <Style.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                    <Setter Property="Foreground" Value="Black"/>
+                    <Setter Property="Background" Value="#E7EAF0"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Foreground" Value="Black"/>
+                    <Setter Property="Background" Value="#DDE3EC"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="26">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,22">
+            <TextBlock Text="إضافة نشاط جديد"
+                       FontSize="25"
+                       FontWeight="Bold"/>
+            <TextBlock Text="اكتب النشاط ومواعيده، ثم اختار يومًا أو أكثر. ستُضاف نسخة متطابقة لكل يوم."
+                       Foreground="#AAB4CA"
+                       TextWrapping="Wrap"
+                       Margin="0,8,0,0"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Margin="0,0,0,16">
+            <TextBlock Text="اسم النشاط" Foreground="#AAB4CA" Margin="0,0,0,7"/>
+            <TextBox x:Name="ActivityNameTextBox"
+                     Height="42"
+                     Padding="10"
+                     FontSize="14"
+                     Background="#151925"
+                     Foreground="White"
+                     BorderBrush="#303747"/>
+        </StackPanel>
+
+        <Grid Grid.Row="2" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Margin="0,0,7,0">
+                <TextBlock Text="وقت البداية" Foreground="#AAB4CA" Margin="0,0,0,7"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="1.1*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,3,0">
+                        <TextBlock Text="ساعة" Foreground="#AAB4CA" FontSize="11" Margin="0,0,0,4"/>
+                        <ComboBox x:Name="StartHourComboBox" Height="38" Background="White" Foreground="Black"
+                                  BorderBrush="#C7CDD8" ItemContainerStyle="{StaticResource LightTimePickerItemStyle}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="3,0">
+                        <TextBlock Text="دقيقة" Foreground="#AAB4CA" FontSize="11" Margin="0,0,0,4"/>
+                        <ComboBox x:Name="StartMinuteComboBox" Height="38" Background="White" Foreground="Black"
+                                  BorderBrush="#C7CDD8" ItemContainerStyle="{StaticResource LightTimePickerItemStyle}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Margin="3,0,0,0">
+                        <TextBlock Text="الفترة" Foreground="#AAB4CA" FontSize="11" Margin="0,0,0,4"/>
+                        <ComboBox x:Name="StartPeriodComboBox" Height="38" Background="White" Foreground="Black"
+                                  BorderBrush="#C7CDD8" ItemContainerStyle="{StaticResource LightTimePickerItemStyle}"/>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Margin="7,0,0,0">
+                <TextBlock Text="وقت النهاية" Foreground="#AAB4CA" Margin="0,0,0,7"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="1.1*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,3,0">
+                        <TextBlock Text="ساعة" Foreground="#AAB4CA" FontSize="11" Margin="0,0,0,4"/>
+                        <ComboBox x:Name="EndHourComboBox" Height="38" Background="White" Foreground="Black"
+                                  BorderBrush="#C7CDD8" ItemContainerStyle="{StaticResource LightTimePickerItemStyle}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="3,0">
+                        <TextBlock Text="دقيقة" Foreground="#AAB4CA" FontSize="11" Margin="0,0,0,4"/>
+                        <ComboBox x:Name="EndMinuteComboBox" Height="38" Background="White" Foreground="Black"
+                                  BorderBrush="#C7CDD8" ItemContainerStyle="{StaticResource LightTimePickerItemStyle}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Margin="3,0,0,0">
+                        <TextBlock Text="الفترة" Foreground="#AAB4CA" FontSize="11" Margin="0,0,0,4"/>
+                        <ComboBox x:Name="EndPeriodComboBox" Height="38" Background="White" Foreground="Black"
+                                  BorderBrush="#C7CDD8" ItemContainerStyle="{StaticResource LightTimePickerItemStyle}"/>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Grid.Row="3">
+            <TextBlock Text="الأيام" FontSize="17" FontWeight="SemiBold"/>
+            <TextBlock Text="اختار الأيام التي تريد تكرار النشاط فيها."
+                       Foreground="#AAB4CA" Margin="0,6,0,12"/>
+            <UniformGrid Columns="2">
+                <CheckBox x:Name="SaturdayCheckBox" Content="السبت" Tag="Saturday" Margin="2,8" Foreground="White" FontSize="14"/>
+                <CheckBox x:Name="SundayCheckBox" Content="الأحد" Tag="Sunday" Margin="2,8" Foreground="White" FontSize="14"/>
+                <CheckBox x:Name="MondayCheckBox" Content="الإثنين" Tag="Monday" Margin="2,8" Foreground="White" FontSize="14"/>
+                <CheckBox x:Name="TuesdayCheckBox" Content="الثلاثاء" Tag="Tuesday" Margin="2,8" Foreground="White" FontSize="14"/>
+                <CheckBox x:Name="WednesdayCheckBox" Content="الأربعاء" Tag="Wednesday" Margin="2,8" Foreground="White" FontSize="14"/>
+                <CheckBox x:Name="ThursdayCheckBox" Content="الخميس" Tag="Thursday" Margin="2,8" Foreground="White" FontSize="14"/>
+                <CheckBox x:Name="FridayCheckBox" Content="الجمعة" Tag="Friday" Margin="2,8" Foreground="White" FontSize="14"/>
+            </UniformGrid>
+            <TextBlock x:Name="DialogErrorText"
+                       Foreground="#FFB5C2"
+                       TextWrapping="Wrap"
+                       Margin="0,12,0,0"/>
+        </StackPanel>
+
+        <Grid Grid.Row="4" Margin="0,18,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0"
+                    Content="إضافة النشاط"
+                    Click="AddButton_Click"
+                    Height="44"
+                    Margin="0,0,6,0"
+                    Background="#6878FF"
+                    Foreground="White"
+                    BorderThickness="0"
+                    FontWeight="SemiBold"
+                    Cursor="Hand"/>
+            <Button Grid.Column="1"
+                    Content="إلغاء"
+                    IsCancel="True"
+                    Height="44"
+                    Margin="6,0,0,0"
+                    Background="#26394A"
+                    Foreground="#A9D8FF"
+                    BorderThickness="0"
+                    Cursor="Hand"/>
+        </Grid>
+    </Grid>
+</Window>
